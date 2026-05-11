@@ -4,11 +4,15 @@ import Navbar from "../common/Navbar";
 import { GoFileDirectoryFill } from "react-icons/go";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { MdEvent } from "react-icons/md";
+import { GrStar } from "react-icons/gr";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Dashboard() {
   const [repositories, setRepositories] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestedRepositories, setSuggestedRepositories] = useState([]);
+  const [starredIds, setStarredIds] = useState(new Set());
 
   const searchResults = useMemo(() => {
     const list = Array.isArray(repositories) ? repositories : [];
@@ -28,7 +32,7 @@ function Dashboard() {
       if (!userId) return;
       try {
         const response = await axios.get(
-          `http://localhost:3000/repo/user/${userId}`,
+          `${API_BASE_URL}/repo/user/${userId}`,
         );
         const data = response.data;
         setRepositories(Array.isArray(data.repositories) ? data.repositories : []);
@@ -40,7 +44,7 @@ function Dashboard() {
 
     const fetchSuggestedRepositories = async () => {
       try {
-        const res = await axios.get(`http://localhost:3000/repo/all`);
+        const res = await axios.get(`${API_BASE_URL}/repo/all`);
         const data = res.data;
         setSuggestedRepositories(Array.isArray(data) ? data : []);
       } catch (err) {
@@ -49,9 +53,66 @@ function Dashboard() {
       }
     };
 
+    const fetchStarredRepositories = async () => {
+      if (!userId) return;
+      try {
+        const response = await axios.get(`${API_BASE_URL}/repo/starred/${userId}`);
+        const starredRepos = response.data?.starredRepos ?? [];
+        setStarredIds(new Set(starredRepos.map((repo) => String(repo._id))));
+      } catch (err) {
+        console.error("Error fetching starred repositories: ", err);
+        setStarredIds(new Set());
+      }
+    };
+
     fetchRepositories();
     fetchSuggestedRepositories();
+    fetchStarredRepositories();
   }, []);
+
+  const handleToggleStar = async (repoId) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId || !repoId) return;
+
+    const repoKey = String(repoId);
+    const isStarred = starredIds.has(repoKey);
+
+    try {
+      if (isStarred) {
+        await axios.patch(`${API_BASE_URL}/repo/unstar/${repoId}`, { userId });
+        setStarredIds((prev) => {
+          const next = new Set(prev);
+          next.delete(repoKey);
+          return next;
+        });
+      } else {
+        await axios.patch(`${API_BASE_URL}/repo/star/${repoId}`, { userId });
+        setStarredIds((prev) => new Set(prev).add(repoKey));
+      }
+    } catch (err) {
+      console.error("Error toggling repository star:", err);
+    }
+  };
+
+  const renderStarButton = (repo) => {
+    const repoId = repo?._id;
+    const isStarred = starredIds.has(String(repoId));
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleToggleStar(repoId)}
+        className={`inline-flex cursor-pointer shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+          isStarred
+            ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20"
+            : "border-gray-700 bg-gray-900 text-gray-400 hover:border-yellow-500/40 hover:text-yellow-300"
+        }`}
+      >
+        <GrStar className="h-3.5 w-3.5" aria-hidden />
+        {isStarred ? "Starred" : "Star"}
+      </button>
+    );
+  };
 
   const cardClass =
     "rounded-xl border border-gray-800 bg-gray-950/60 shadow-inner backdrop-blur-sm";
@@ -88,11 +149,12 @@ function Dashboard() {
                       Nothing to suggest yet.
                     </p>
                   ) : (
-                    <ul className="space-y-2">
+                    <ul className="space-y-2 cursor-pointer">
                       {suggestedRepositories.map((repo) => (
                         <li key={repo._id ?? repo.name}>
-                          <div className={`${repoRowClass} cursor-default`}>
-                            <div className="flex items-start gap-2">
+                          <div className={`${repoRowClass} cursor-pointer`}>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex min-w-0 items-start gap-2 cursor-pointer">
                               <GoFileDirectoryFill
                                 className="mt-0.5 h-4 w-4 shrink-0 text-blue-400/80"
                                 aria-hidden
@@ -111,6 +173,8 @@ function Dashboard() {
                                   </p>
                                 )}
                               </div>
+                              </div>
+                              {renderStarButton(repo)}
                             </div>
                           </div>
                         </li>
@@ -168,7 +232,7 @@ function Dashboard() {
                         <li key={repo._id ?? repo.name}>
                           <article className={repoRowClass}>
                             <div className="flex flex-wrap items-start justify-between gap-2">
-                              <div className="flex min-w-0 items-start gap-3">
+                              <div className="flex min-w-0 items-start gap-3 cursor-pointer">
                                 <span className="mt-0.5 rounded-md bg-gray-800 p-2">
                                   <GoFileDirectoryFill
                                     className="h-4 w-4 text-blue-400"
@@ -190,11 +254,14 @@ function Dashboard() {
                                   )}
                                 </div>
                               </div>
-                              {repo.visibility != null && (
-                                <span className="shrink-0 rounded-md border border-gray-600 px-2 py-1 text-xs capitalize text-gray-400">
-                                  {String(repo.visibility)}
-                                </span>
-                              )}
+                              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                {repo.visibility != null && (
+                                  <span className="rounded-md border border-gray-600 px-2 py-1 text-xs capitalize text-gray-400">
+                                    {String(repo.visibility)}
+                                  </span>
+                                )}
+                                {renderStarButton(repo)}
+                              </div>
                             </div>
                           </article>
                         </li>
@@ -253,6 +320,66 @@ function Dashboard() {
                       rel="noreferrer"
                     >
                       ISTELive 2026
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://reinvent.awsevents.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      AWS re:Invent
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://githubuniverse.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      GitHub Universe
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      KubeCon + CloudNativeCon North America
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://build.microsoft.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Microsoft Build
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://cloud.withgoogle.com/next"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Google Cloud Next
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className="block rounded-lg px-3 py-3 text-sm text-gray-300 transition-colors hover:bg-gray-800/50 hover:text-[#58a6ff]"
+                      href="https://react.dev/conf"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      React Conf
                     </a>
                   </li>
                 </ul>

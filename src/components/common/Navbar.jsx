@@ -2,6 +2,7 @@ import React from "react";
 import { Link, NavLink } from "react-router-dom";
 import { FaUser, FaPlus } from "react-icons/fa6";
 import logo from "../../assets/logo-img.png";
+import { FaTerminal } from "react-icons/fa";
 
 const navLinkClass = ({ isActive }) =>
   [
@@ -49,6 +50,15 @@ function Navbar({ children }) {
               <FaPlus className="h-3.5 w-3.5" aria-hidden />
               <span className="sm:hidden">New</span>
               <span className="hidden sm:inline">New repository</span>
+            </Link>
+
+            <Link
+              to="/repo/commands"
+              className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+            >
+              <FaTerminal className="h-3.5 w-3.5" aria-hidden />
+              
+              <span className="hidden sm:inline">Commands</span>
             </Link>
 
             <NavLink

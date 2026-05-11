@@ -2,10 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { FaRegFaceSadCry } from "react-icons/fa6";
 import axios from "axios";
 import { MdDeleteOutline } from "react-icons/md";
+import { GrStar } from "react-icons/gr";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Repositories() {
   const [repositories, setRepositories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [starredIds, setStarredIds] = useState(new Set());
   const [dialog, setDialog] = useState(null);
   const [promptDraft, setPromptDraft] = useState("");
   const promptInputRef = useRef(null);
@@ -122,7 +126,7 @@ function Repositories() {
 
     try {
       const response = await axios.delete(
-        `http://localhost:3000/repo/delete/${repository._id}`,
+        `${API_BASE_URL}/repo/delete/${repository._id}`,
       );
       await alertModal({
         variant: "success",
@@ -161,19 +165,66 @@ function Repositories() {
         return;
       }
       try {
-        const response = await axios.get(
-          `http://localhost:3000/repo/user/${userId}`,
-        );
-        setRepositories(response.data.repositories ?? []);
+        const reposResponse = await axios.get(`${API_BASE_URL}/repo/user/${userId}`);
+        setRepositories(reposResponse.data.repositories ?? []);
       } catch (err) {
         console.error("Error while fetching repositories: ", err);
         setRepositories([]);
+      }
+
+      try {
+        const starredResponse = await axios.get(
+          `${API_BASE_URL}/repo/starred/${userId}`,
+        );
+        setStarredIds(
+          new Set(
+            (starredResponse.data?.starredRepos ?? []).map((repo) =>
+              String(repo._id),
+            ),
+          ),
+        );
+      } catch (err) {
+        console.error("Error while fetching starred repositories: ", err);
+        setStarredIds(new Set());
       } finally {
         setLoading(false);
       }
     };
     fetchRepos();
   }, []);
+
+  const handleToggleStar = async (repository) => {
+    const userId = localStorage.getItem("userId");
+    if (!userId || !repository?._id) return;
+
+    const repoId = String(repository._id);
+    const isStarred = starredIds.has(repoId);
+
+    try {
+      if (isStarred) {
+        await axios.patch(`${API_BASE_URL}/repo/unstar/${repository._id}`, {
+          userId,
+        });
+        setStarredIds((prev) => {
+          const next = new Set(prev);
+          next.delete(repoId);
+          return next;
+        });
+      } else {
+        await axios.patch(`${API_BASE_URL}/repo/star/${repository._id}`, {
+          userId,
+        });
+        setStarredIds((prev) => new Set(prev).add(repoId));
+      }
+    } catch (err) {
+      console.error("Error toggling repository star: ", err);
+      await alertModal({
+        variant: "danger",
+        title: "Star update failed",
+        message: "Unable to update starred repositories right now.",
+      });
+    }
+  };
 
   const variantAccent = (v) => {
     if (v === "danger")
@@ -330,7 +381,7 @@ function Repositories() {
                 className="group py-4 first:pt-0 focus-within:bg-[#161b22]/80"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 cursor-pointer">
                     <h4 className="text-base font-semibold text-[#58a6ff]">
                       {repository.name}
                     </h4>
@@ -350,14 +401,38 @@ function Repositories() {
                     )}
                   </div>
 
-                  <button
-                    type="button"
-                    aria-label={`Delete ${repository.name}`}
-                    onClick={() => handleDeleteRepository(repository)}
-                    className="shrink-0 rounded-md p-2 text-red-500 opacity-100 transition-opacity duration-150 hover:bg-red-500/10 hover:text-red-400 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-red-500/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-                  >
-                    <MdDeleteOutline className="h-6 w-6" aria-hidden />
-                  </button>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label={
+                        starredIds.has(String(repository._id))
+                          ? `Unstar ${repository.name}`
+                          : `Star ${repository.name}`
+                      }
+                      onClick={() => handleToggleStar(repository)}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                        starredIds.has(String(repository._id))
+                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20"
+                          : "border-gray-700 bg-gray-900 text-gray-400 hover:border-yellow-500/40 hover:text-yellow-300"
+                      }`}
+                    >
+                      <GrStar className="h-4 w-4" aria-hidden />
+                      <span className="hidden sm:inline">
+                        {starredIds.has(String(repository._id))
+                          ? "Starred"
+                          : "Star"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label={`Delete ${repository.name}`}
+                      onClick={() => handleDeleteRepository(repository)}
+                      className="rounded-md p-2 cursor-pointer text-red-500 opacity-100 transition-opacity duration-150 hover:bg-red-500/10 hover:text-red-400 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-red-500/60 sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                    >
+                      <MdDeleteOutline className="h-6 w-6" aria-hidden />
+                    </button>
+                  </div>
                 </div>
               </li>
             ))}

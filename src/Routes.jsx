@@ -7,6 +7,7 @@ import Login from "./components/auth/Login";
 import Signup from "./components/auth/Signup";
 import Navbar from "./components/common/Navbar";
 import NewRepository from "./components/repo/newRepository";
+import RepoCommands from "./components/repo/repoCommands";
 
 // auth context
 import { useAuth } from './authContext';
@@ -48,6 +49,16 @@ const ProjectRoutes = () => {
             element: (
                 <Navbar>
                     <NewRepository />
+                </Navbar>
+            ),
+        },
+        {
+            path : "/repo/commands",
+            element : (
+                <Navbar>
+                    <div className="bg-gray-900 px-3 py-8 sm:px-4 lg:px-6">
+                        <RepoCommands />
+                    </div>
                 </Navbar>
             ),
         },

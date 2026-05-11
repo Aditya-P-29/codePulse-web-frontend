@@ -3,37 +3,18 @@ import React from "react";
 import HeatMap from "@uiw/react-heat-map";
 
 import { useState, useEffect } from "react";
+import axios from "axios";
 
-//funcition to generate random activity
-
-const generateActivity = (startDate, endDate) => {
-  const data = []; //intitialize an empty array
-
-  const currentDate = new Date(startDate);
-
-  const end = new Date(endDate);
-
-  while (currentDate <= end) {
-    const count = Math.floor(Math.random() * 50);
-
-    data.push({
-      date: currentDate.toISOString().split("T")[0], //streak
-
-      count: count, //count of activity
-    });
-
-    currentDate.setDate(currentDate.getDate() + 1); //increment the date by 1 day
-  }
-
-  return data;
-};
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 //colors
 
 const getPanelColors = (maxCount) => {
-  const colors = [];
+  const colors = ["#4d5560"];
 
-  for (let i = 0; i <= maxCount; i++) {
+  if (maxCount <= 0) return colors;
+
+  for (let i = 1; i <= maxCount; i++) {
     const greenValue = Math.floor((i / maxCount) * 255);
 
     colors[i] = `rgb(0, ${greenValue}, 0)`;
@@ -47,23 +28,46 @@ function heatMap() {
 
   const [panelColors, setPanelColors] = useState({});
 
+  const currentYear = new Date().getFullYear();
+
   useEffect(() => {
-    //in future we will fetch data from the database
-
     const fetchData = async () => {
-      // Contribution points only through May; Jun–Dec omitted so those days stay empty.
+      const userId = localStorage.getItem("userId");
 
-      const data = generateActivity("2026-01-01", "2026-05-31");
+      if (!userId) {
+        setActivityData([]);
+        setPanelColors(getPanelColors(0));
+        return;
+      }
 
-      setActivityData(data);
+      try {
+        const response = await axios.get(
+          `${API_BASE_URL}/repo/user/${userId}/activity`,
+          {
+            params: { year: currentYear },
+          },
+        );
 
-      const maxCount = Math.max(...data.map((item) => item.count));
+        const data = Array.isArray(response.data?.activity)
+          ? response.data.activity
+          : [];
 
-      setPanelColors(getPanelColors(maxCount));
+        setActivityData(data);
+
+        const maxCount = data.length
+          ? Math.max(...data.map((item) => item.count || 0))
+          : 0;
+
+        setPanelColors(getPanelColors(maxCount));
+      } catch (err) {
+        console.error("Error fetching contribution activity:", err);
+        setActivityData([]);
+        setPanelColors(getPanelColors(0));
+      }
     };
 
     fetchData();
-  }, []);
+  }, [currentYear]);
 
   return (
     <div
@@ -135,8 +139,8 @@ function heatMap() {
               "Nov",
               "Dec",
             ]}
-            startDate={new Date("2026-01-01")}
-            endDate={new Date("2026-12-31")}
+            startDate={new Date(`${currentYear}-01-01`)}
+            endDate={new Date(`${currentYear}-12-31`)}
             rectSize={15}
             space={3}
             rectProps={{

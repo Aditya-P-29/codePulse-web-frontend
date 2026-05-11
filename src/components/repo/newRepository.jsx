@@ -4,6 +4,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { GoRepo } from "react-icons/go";
 import { IoArrowBack } from "react-icons/io5";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function NewRepository() {
   const navigate = useNavigate();
   const [owner, setOwner] = useState("");
@@ -31,14 +33,14 @@ export default function NewRepository() {
 
     try {
       setLoading(true);
-      const response = await axios.post(`http://localhost:3000/repo/create`, {
+      const response = await axios.post(`${API_BASE_URL}/repo/create`, {
         owner,
         name: name.trim(),
         description: description.trim(),
         visibility,
       });
       alert(response.data?.message || "Repository created successfully!");
-      navigate("/");
+      navigate("/repo/commands");
     } catch (err) {
       console.error("Error creating a new repository!", err);
       const msg =

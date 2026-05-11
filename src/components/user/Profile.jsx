@@ -7,8 +7,11 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import HeatMap from "./heatMap";
 import Repositories from "./Repositories";
+import StarredRepositories from "./StarredRepositories";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../authContext";
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Profile() {
   const { setCurrentUser } = useAuth();
@@ -38,7 +41,7 @@ function Profile() {
       if (userId) {
         try {
           const response = await axios.get(
-            `http://localhost:3000/userProfile/${userId}`,
+            `${API_BASE_URL}/userProfile/${userId}`,
           );
           setUserDetails(response.data);
         } catch (err) {
@@ -147,9 +150,7 @@ function Profile() {
               {activeTab === "repositories" && <Repositories />}
 
               {activeTab === "starred" && (
-                <div className="rounded-xl border border-gray-800 bg-gray-950/50 p-8 text-center text-sm text-gray-500">
-                  Starred repositories are not available yet.
-                </div>
+                <StarredRepositories />
               )}
             </section>
           </div>

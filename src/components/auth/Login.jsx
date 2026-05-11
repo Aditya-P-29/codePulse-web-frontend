@@ -4,6 +4,8 @@ import axios from "axios";
 import { useAuth } from "../../authContext";
 import { Link } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function Login() {
   //get rid of the current credentials from localStorage
   // useEffect(() => {
@@ -23,7 +25,7 @@ function Login() {
     try {
       setLoading(true);
       //send res to backend server
-      const res = await axios.post("http://localhost:3000/login", {
+      const res = await axios.post(`${API_BASE_URL}/login`, {
         email: email,
         password: password,
       });

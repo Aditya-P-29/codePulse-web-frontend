@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../../authContext";
 import { Link } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 function Signup() {
   const [email, setEmail] = useState("");
@@ -18,7 +19,7 @@ function Signup() {
     try {
       setLoading(true);
       //calls at backend server
-      const res = await axios.post("http://localhost:3000/signup", {
+      const res = await axios.post(`${API_BASE_URL}/signup`, {
         username: username, //passing this info to server during signup
         email: email,
         password: password,
