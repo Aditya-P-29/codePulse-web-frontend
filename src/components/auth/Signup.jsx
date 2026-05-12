@@ -3,8 +3,7 @@ import logo from "../../assets/logo-img.png";
 import axios from "axios";
 import { useAuth } from "../../authContext";
 import { Link } from "react-router-dom";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../../config/api";
 
 function Signup() {
   const [email, setEmail] = useState("");

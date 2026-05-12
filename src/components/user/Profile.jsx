@@ -10,8 +10,7 @@ import Repositories from "./Repositories";
 import StarredRepositories from "./StarredRepositories";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../authContext";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../../config/api";
 
 function Profile() {
   const { setCurrentUser } = useAuth();

@@ -3,8 +3,7 @@ import axios from "axios";
 import { GrStar } from "react-icons/gr";
 import { GoFileDirectoryFill } from "react-icons/go";
 import { FaRegFaceSadCry } from "react-icons/fa6";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../../config/api";
 
 function StarredRepositories() {
   const [repositories, setRepositories] = useState([]);

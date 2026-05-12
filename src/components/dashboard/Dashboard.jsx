@@ -5,8 +5,7 @@ import { GoFileDirectoryFill } from "react-icons/go";
 import { HiOutlineSparkles } from "react-icons/hi2";
 import { MdEvent } from "react-icons/md";
 import { GrStar } from "react-icons/gr";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../../config/api";
 
 function Dashboard() {
   const [repositories, setRepositories] = useState([]);

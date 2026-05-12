@@ -3,8 +3,7 @@ import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import { GoRepo } from "react-icons/go";
 import { IoArrowBack } from "react-icons/io5";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+import { API_BASE_URL } from "../../config/api";
 
 export default function NewRepository() {
   const navigate = useNavigate();
