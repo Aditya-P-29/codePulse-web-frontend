@@ -40,7 +40,12 @@ export default function NewRepository() {
         visibility,
       });
       alert(response.data?.message || "Repository created successfully!");
-      navigate("/repo/commands");
+      navigate("/repo/commands", {
+        state: {
+          repositoryId: response.data?.repositoryID,
+          repositoryName: name.trim(),
+        },
+      });
     } catch (err) {
       console.error("Error creating a new repository!", err);
       const msg =

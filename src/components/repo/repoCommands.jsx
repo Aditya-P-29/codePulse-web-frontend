@@ -1,9 +1,17 @@
+import { useLocation } from "react-router-dom";
+
 function RepoCommands() {
+  const { state } = useLocation();
+  const repositoryId = state?.repositoryId;
+  const repositoryName = state?.repositoryName;
+  const repoPlaceholder = repositoryId || "<repo_id>";
+  const initCommand = `node index.js init --repoId ${repoPlaceholder}`;
+
   const commands = [
     {
       title: "Initialize repository",
-      command: "node index.js init",
-      description: "Create the local VCS folder structure.",
+      command: initCommand,
+      description: "Create the local VCS folder structure and link it to this frontend repo.",
     },
     {
       title: "Stage a file",
@@ -13,17 +21,17 @@ function RepoCommands() {
     {
       title: "Commit staged files",
       command: 'node index.js commit "<message>"',
-      description: "Save staged changes with a commit message.",
+      description: "Save staged changes with a commit message. The linked repo ID is stored in .vcsGit/config.json.",
     },
     {
       title: "Push commits",
       command: "node index.js push",
-      description: "Upload commits to the configured S3 bucket.",
+      description: "Upload commits to the S3 path for the linked frontend repo.",
     },
     {
       title: "Pull commits",
       command: "node index.js pull",
-      description: "Download commits from the configured S3 bucket.",
+      description: "Download commits from the S3 path for the linked frontend repo.",
     },
     {
       title: "Revert commit",
@@ -45,6 +53,28 @@ function RepoCommands() {
           Run these commands from the backend folder to manage your local VCS
           repository and sync commits with S3.
         </p>
+        {repositoryId ? (
+          <div className="mt-4 rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-3 text-sm text-blue-100">
+            <p className="font-semibold">Linked repo from frontend</p>
+            <p className="mt-1 text-blue-200/80">
+              {repositoryName ? `${repositoryName} · ` : ""}
+              <span className="font-mono">{repositoryId}</span>
+            </p>
+            <div className="mt-3 rounded-lg border border-blue-400/20 bg-black/30 p-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
+                Run this first
+              </p>
+              <code className="block break-all font-mono text-sm text-green-300">
+                {initCommand}
+              </code>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-100">
+            Replace <span className="font-mono">&lt;repo_id&gt;</span> with the
+            MongoDB repository ID shown after creating a repo.
+          </div>
+        )}
       </div>
 
       <ul className="space-y-4">
