@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { FaRegFaceSadCry } from "react-icons/fa6";
 import axios from "axios";
 import { MdDeleteOutline } from "react-icons/md";
@@ -380,10 +381,13 @@ function Repositories() {
                 className="group py-4 first:pt-0 focus-within:bg-[#161b22]/80"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1 cursor-pointer">
-                    <h4 className="text-base font-semibold text-[#58a6ff]">
+                  <div className="min-w-0 flex-1">
+                    <Link
+                      to={`/repo/${repository._id}`}
+                      className="text-base font-semibold text-[#58a6ff] hover:underline"
+                    >
                       {repository.name}
-                    </h4>
+                    </Link>
                     {repository.description ? (
                       <p className="mt-1 text-sm text-gray-400">
                         {repository.description}

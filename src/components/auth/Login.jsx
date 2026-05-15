@@ -40,7 +40,12 @@ function Login() {
       window.location.href = "/"; //home
     } catch (err) {
       console.error(err);
-      alert("Login Failed!");
+      const message =
+        err.response?.data?.message ||
+        (err.message === "Network Error"
+          ? "Cannot reach backend. Check EC2 is running and API URL is correct."
+          : err.message);
+      alert(`Login failed: ${message}`);
       setLoading(false);
     }
   };

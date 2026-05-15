@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../common/Navbar";
 import { GoFileDirectoryFill } from "react-icons/go";
@@ -231,7 +232,7 @@ function Dashboard() {
                         <li key={repo._id ?? repo.name}>
                           <article className={repoRowClass}>
                             <div className="flex flex-wrap items-start justify-between gap-2">
-                              <div className="flex min-w-0 items-start gap-3 cursor-pointer">
+                              <div className="flex min-w-0 items-start gap-3">
                                 <span className="mt-0.5 rounded-md bg-gray-800 p-2">
                                   <GoFileDirectoryFill
                                     className="h-4 w-4 text-blue-400"
@@ -239,9 +240,12 @@ function Dashboard() {
                                   />
                                 </span>
                                 <div className="min-w-0">
-                                  <h3 className="truncate text-base font-semibold text-white">
+                                  <Link
+                                    to={`/repo/${repo._id}`}
+                                    className="truncate text-base font-semibold text-white hover:text-[#58a6ff] hover:underline"
+                                  >
                                     {repo.name}
-                                  </h3>
+                                  </Link>
                                   {repo.description ? (
                                     <p className="mt-1 text-sm text-gray-400">
                                       {repo.description}
