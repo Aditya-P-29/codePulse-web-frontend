@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import axios from "axios";
-import { IoArrowBack } from "react-icons/io5";
+import { IoArrowBack, IoCopyOutline, IoCheckmark } from "react-icons/io5";
 import { GoFileDirectoryFill } from "react-icons/go";
 import { API_BASE_URL } from "../../config/api";
 
@@ -22,6 +22,9 @@ function RepositoryDetail() {
   const [fileContent, setFileContent] = useState(null);
   const [contentLoading, setContentLoading] = useState(false);
   const [contentError, setContentError] = useState("");
+  const [copiedRepoId, setCopiedRepoId] = useState(false);
+
+  const repoId = data?.repositoryId ?? id;
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -97,6 +100,17 @@ function RepositoryDetail() {
     return groups;
   }, [data]);
 
+  const handleCopyRepoId = async () => {
+    if (!repoId) return;
+    try {
+      await navigator.clipboard.writeText(String(repoId));
+      setCopiedRepoId(true);
+      window.setTimeout(() => setCopiedRepoId(false), 2000);
+    } catch {
+      setCopiedRepoId(false);
+    }
+  };
+
   const handleViewFile = async (file) => {
     if (usingFallback) return;
 
@@ -144,22 +158,65 @@ function RepositoryDetail() {
       </Link>
 
       <header className="mb-6 rounded-xl border border-gray-800 bg-[#0d1117] p-6">
-        <div className="flex items-start gap-3">
-          <span className="rounded-md bg-gray-800 p-2">
-            <GoFileDirectoryFill className="h-5 w-5 text-blue-400" aria-hidden />
-          </span>
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {data?.repositoryName ?? "Repository"}
-            </h1>
-            <p className="mt-1 font-mono text-xs text-gray-500">{id}</p>
-            <p className="mt-2 text-sm text-gray-400">
-              Files pushed from the CLI appear here after{" "}
-              <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
-                node index.js push
-              </code>
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-3">
+            <span className="shrink-0 rounded-md bg-gray-800 p-2">
+              <GoFileDirectoryFill className="h-5 w-5 text-blue-400" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold text-white">
+                {data?.repositoryName ?? "Repository"}
+              </h1>
+              <p className="mt-2 text-sm text-gray-400">
+                Files pushed from the CLI appear here after{" "}
+                <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
+                  node index.js push
+                </code>
+              </p>
+            </div>
           </div>
+
+          {repoId ? (
+            <div className="w-full shrink-0 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 sm:max-w-md">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">
+                Repo ID
+              </p>
+              <p className="mt-1 text-xs text-blue-200/80">
+                Use with CLI commands (init, push, pull)
+              </p>
+              <div className="mt-2 flex items-start gap-2">
+                <code className="min-w-0 flex-1 break-all font-mono text-sm text-blue-100">
+                  {repoId}
+                </code>
+                <button
+                  type="button"
+                  onClick={handleCopyRepoId}
+                  className="shrink-0 rounded-md border border-blue-400/30 bg-black/30 p-2 text-blue-200 transition-colors hover:bg-black/50 hover:text-white"
+                  title="Copy repo ID"
+                  aria-label="Copy repo ID"
+                >
+                  {copiedRepoId ? (
+                    <IoCheckmark className="h-4 w-4 text-green-400" aria-hidden />
+                  ) : (
+                    <IoCopyOutline className="h-4 w-4" aria-hidden />
+                  )}
+                </button>
+              </div>
+              <code className="mt-3 block break-all rounded-md border border-blue-400/20 bg-black/30 px-3 py-2 font-mono text-xs text-green-300">
+                node index.js init --repoId {repoId}
+              </code>
+              <Link
+                to="/repo/commands"
+                state={{
+                  repositoryId: repoId,
+                  repositoryName: data?.repositoryName,
+                }}
+                className="mt-3 inline-block text-xs text-[#58a6ff] hover:underline"
+              >
+                View all CLI commands →
+              </Link>
+            </div>
+          ) : null}
         </div>
       </header>
 
