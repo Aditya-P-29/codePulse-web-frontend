@@ -17,19 +17,66 @@ function RepositoryDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
+  const [usingFallback, setUsingFallback] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [fileContent, setFileContent] = useState(null);
+  const [contentLoading, setContentLoading] = useState(false);
+  const [contentError, setContentError] = useState("");
 
   useEffect(() => {
     const fetchFiles = async () => {
       if (!id) return;
       setLoading(true);
       setError("");
+      setUsingFallback(false);
+
+      const fileEndpoints = [
+        `${API_BASE_URL}/repo/${id}/files`,
+        `${API_BASE_URL}/repo/files/${id}`,
+        `${API_BASE_URL}/repo/${id}?files=true`,
+      ];
+
+      for (const url of fileEndpoints) {
+        try {
+          const response = await axios.get(url);
+          setData(response.data);
+          return;
+        } catch (err) {
+          if (err.response?.status !== 404) {
+            console.error("Error fetching repository files:", err);
+          }
+        }
+      }
 
       try {
-        const response = await axios.get(`${API_BASE_URL}/repo/${id}/files`);
-        setData(response.data);
+        const response = await axios.get(`${API_BASE_URL}/repo/${id}`);
+        const repo = Array.isArray(response.data)
+          ? response.data[0]
+          : response.data;
+
+        if (!repo) {
+          setError("Repository not found.");
+          setData(null);
+          return;
+        }
+
+        const commits = repo.content || [];
+        setData({
+          repositoryId: repo._id,
+          repositoryName: repo.name,
+          commits,
+          files: commits.map((commitId) => ({
+            commitId,
+            fileName: "Pushed commit (update EC2 backend to list file names)",
+            key: commitId,
+          })),
+        });
+        setUsingFallback(true);
       } catch (err) {
-        console.error("Error fetching repository files:", err);
-        setError("Unable to load repository files.");
+        console.error("Error fetching repository:", err);
+        setError(
+          "Unable to load repository files. Redeploy the backend on EC2 (commit 24300b7 or newer).",
+        );
         setData(null);
       } finally {
         setLoading(false);
@@ -49,6 +96,42 @@ function RepositoryDetail() {
     }
     return groups;
   }, [data]);
+
+  const handleViewFile = async (file) => {
+    if (usingFallback) return;
+
+    setSelectedFile(file);
+    setContentLoading(true);
+    setContentError("");
+    setFileContent(null);
+
+    const params = new URLSearchParams({
+      commitId: file.commitId,
+      fileName: file.fileName,
+    });
+
+    const contentUrls = [
+      `${API_BASE_URL}/repo/${id}/file-content?${params}`,
+    ];
+
+    try {
+      for (const url of contentUrls) {
+        try {
+          const response = await axios.get(url);
+          setFileContent(response.data);
+          return;
+        } catch (err) {
+          console.error("Error fetching file content:", err);
+          setContentError(
+            err.response?.data?.error ||
+              "Unable to load file content. Deploy the latest backend on EC2.",
+          );
+        }
+      }
+    } finally {
+      setContentLoading(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -79,6 +162,15 @@ function RepositoryDetail() {
           </div>
         </div>
       </header>
+
+      {usingFallback ? (
+        <p className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+          Showing pushed commit IDs from the database. On EC2 run{" "}
+          <code className="text-xs">git pull</code> and{" "}
+          <code className="text-xs">pm2 restart codepulse-backend</code>, then
+          refresh to see file names from S3.
+        </p>
+      ) : null}
 
       {loading ? (
         <p className="text-sm text-gray-400">Loading files…</p>
@@ -123,25 +215,80 @@ function RepositoryDetail() {
               </div>
 
               <ul className="divide-y divide-gray-800">
-                {files.map((file) => (
-                  <li
-                    key={file.key}
-                    className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
-                  >
-                    <span className="font-medium text-[#58a6ff]">
-                      {file.fileName}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {formatBytes(file.size)}
-                      {file.lastModified
-                        ? ` · ${new Date(file.lastModified).toLocaleString()}`
-                        : ""}
-                    </span>
-                  </li>
-                ))}
+                {files.map((file) => {
+                  const isSelected =
+                    selectedFile?.key === file.key ||
+                    (selectedFile?.commitId === file.commitId &&
+                      selectedFile?.fileName === file.fileName);
+
+                  return (
+                    <li key={file.key}>
+                      <button
+                        type="button"
+                        onClick={() => handleViewFile(file)}
+                        disabled={usingFallback}
+                        className={`flex w-full flex-wrap items-center justify-between gap-2 px-4 py-3 text-left transition-colors ${
+                          isSelected
+                            ? "bg-[#161b22]"
+                            : "hover:bg-[#161b22]/80"
+                        } ${usingFallback ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
+                      >
+                        <span className="font-medium text-[#58a6ff]">
+                          {file.fileName}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {formatBytes(file.size)}
+                          {file.lastModified
+                            ? ` · ${new Date(file.lastModified).toLocaleString()}`
+                            : ""}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ))}
+
+          {selectedFile ? (
+            <section className="overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117]">
+              <div className="flex items-center justify-between border-b border-gray-800 px-4 py-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-gray-300">
+                    File preview
+                  </h2>
+                  <p className="mt-0.5 font-mono text-xs text-[#58a6ff]">
+                    {selectedFile.fileName}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                    setFileContent(null);
+                    setContentError("");
+                  }}
+                  className="text-xs text-gray-400 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
+
+              {contentLoading ? (
+                <p className="px-4 py-6 text-sm text-gray-400">Loading file…</p>
+              ) : contentError ? (
+                <p className="px-4 py-6 text-sm text-red-300">{contentError}</p>
+              ) : fileContent?.encoding === "base64" ? (
+                <p className="px-4 py-6 text-sm text-gray-400">
+                  Binary file preview is not supported.
+                </p>
+              ) : (
+                <pre className="max-h-96 overflow-auto whitespace-pre-wrap break-words px-4 py-4 font-mono text-sm text-gray-200">
+                  {fileContent?.content ?? ""}
+                </pre>
+              )}
+            </section>
+          ) : null}
         </div>
       )}
     </div>
