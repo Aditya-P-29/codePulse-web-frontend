@@ -30,25 +30,25 @@ function RepositoryDetail() {
       setError("");
       setUsingFallback(false);
 
-      const fileEndpoints = [
-        `${API_BASE_URL}/repo/${id}/files`,
-        `${API_BASE_URL}/repo/files/${id}`,
-        `${API_BASE_URL}/repo/${id}?files=true`,
-      ];
+      try {
+        const fileEndpoints = [
+          `${API_BASE_URL}/repo/${id}/files`,
+          `${API_BASE_URL}/repo/files/${id}`,
+          `${API_BASE_URL}/repo/${id}?files=true`,
+        ];
 
-      for (const url of fileEndpoints) {
-        try {
-          const response = await axios.get(url);
-          setData(response.data);
-          return;
-        } catch (err) {
-          if (err.response?.status !== 404) {
-            console.error("Error fetching repository files:", err);
+        for (const url of fileEndpoints) {
+          try {
+            const response = await axios.get(url);
+            setData(response.data);
+            return;
+          } catch (err) {
+            if (err.response?.status !== 404) {
+              console.error("Error fetching repository files:", err);
+            }
           }
         }
-      }
 
-      try {
         const response = await axios.get(`${API_BASE_URL}/repo/${id}`);
         const repo = Array.isArray(response.data)
           ? response.data[0]
