@@ -170,7 +170,7 @@ function RepositoryDetail() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto w-full max-w-5xl px-1 sm:px-0">
       <Link
         to="/profile"
         className="mb-6 inline-flex items-center gap-2 text-sm text-gray-400 transition-colors hover:text-[#58a6ff]"
@@ -179,14 +179,14 @@ function RepositoryDetail() {
         Back to profile
       </Link>
 
-      <header className="mb-6 rounded-xl border border-gray-800 bg-[#0d1117] p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <header className="mb-6 rounded-xl border border-gray-800 bg-[#0d1117] p-5 sm:p-6">
+        <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,320px)] lg:items-start">
           <div className="flex min-w-0 items-start gap-3">
             <span className="shrink-0 rounded-md bg-gray-800 p-2">
               <GoFileDirectoryFill className="h-5 w-5 text-blue-400" aria-hidden />
             </span>
-            <div className="min-w-0">
-              <h1 className="text-2xl font-bold text-white">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-bold text-white break-words">
                 {data?.repositoryName ?? "Repository"}
               </h1>
               {ownerUsername ? (
@@ -197,35 +197,34 @@ function RepositoryDetail() {
                   </span>
                 </p>
               ) : null}
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-2 max-w-prose text-sm leading-relaxed text-gray-400">
                 Files pushed from the CLI appear here after{" "}
-                <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
+                <code className="whitespace-nowrap rounded bg-gray-800 px-1.5 py-0.5 text-xs text-gray-200">
                   node index.js push
                 </code>
               </p>
             </div>
           </div>
 
-          {ownerId ? (
-            <div className="w-full shrink-0 sm:max-w-md">
+          <aside className="flex w-full flex-col gap-3">
+            {ownerId ? (
               <FollowButton
                 targetUserId={ownerId}
                 targetUsername={ownerUsername}
                 className="w-full"
               />
-            </div>
-          ) : null}
+            ) : null}
 
-          {repoId ? (
-            <div className="w-full shrink-0 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 sm:max-w-md">
+            {repoId ? (
+            <div className="rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-300">
                 Repo ID
               </p>
-              <p className="mt-1 text-xs text-blue-200/80">
+              <p className="mt-1 text-xs leading-relaxed text-blue-200/80">
                 Use with CLI commands (init, push, pull)
               </p>
-              <div className="mt-2 flex items-start gap-2">
-                <code className="min-w-0 flex-1 break-all font-mono text-sm text-blue-100">
+              <div className="mt-3 flex items-start gap-2">
+                <code className="min-w-0 flex-1 break-all font-mono text-sm leading-snug text-blue-100">
                   {repoId}
                 </code>
                 <button
@@ -242,7 +241,7 @@ function RepositoryDetail() {
                   )}
                 </button>
               </div>
-              <code className="mt-3 block break-all rounded-md border border-blue-400/20 bg-black/30 px-3 py-2 font-mono text-xs text-green-300">
+              <code className="mt-3 block break-all rounded-md border border-blue-400/20 bg-black/30 px-3 py-2.5 font-mono text-xs leading-relaxed text-green-300">
                 node index.js init --repoId {repoId}
               </code>
               <Link
@@ -257,7 +256,8 @@ function RepositoryDetail() {
                 View all CLI commands →
               </Link>
             </div>
-          ) : null}
+            ) : null}
+          </aside>
         </div>
       </header>
 
@@ -306,20 +306,18 @@ function RepositoryDetail() {
               key={commitId}
               className="overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117]"
             >
-              <div className="border-b border-gray-800 px-4 py-3">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-sm font-semibold text-gray-300">
-                      Commit ID
-                    </h2>
-                    <p className="mt-0.5 break-all font-mono text-xs text-[#58a6ff]">
-                      {commitId}
-                    </p>
-                  </div>
+              <div className="border-b border-gray-800 px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Commit ID
+                </p>
+                <div className="mt-2 flex items-start gap-2">
+                  <code className="min-w-0 flex-1 break-all font-mono text-sm leading-snug text-[#58a6ff]">
+                    {commitId}
+                  </code>
                   <button
                     type="button"
                     onClick={() => handleCopyCommitId(commitId)}
-                    className="shrink-0 rounded-md border border-gray-700 bg-gray-800/80 p-2 text-gray-300 transition-colors hover:text-white"
+                    className="shrink-0 rounded-md border border-gray-600 bg-gray-800/80 p-2 text-gray-300 transition-colors hover:text-white"
                     title="Copy commit ID"
                     aria-label="Copy commit ID"
                   >
@@ -330,7 +328,7 @@ function RepositoryDetail() {
                     )}
                   </button>
                 </div>
-                <code className="mt-2 block break-all rounded-md border border-gray-700/80 bg-black/30 px-3 py-2 font-mono text-xs text-green-300">
+                <code className="mt-3 block break-all rounded-md border border-gray-700/80 bg-black/30 px-3 py-2.5 font-mono text-xs leading-relaxed text-green-300">
                   node index.js revert {commitId}
                 </code>
               </div>
