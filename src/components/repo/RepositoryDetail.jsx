@@ -23,6 +23,7 @@ function RepositoryDetail() {
   const [contentLoading, setContentLoading] = useState(false);
   const [contentError, setContentError] = useState("");
   const [copiedRepoId, setCopiedRepoId] = useState(false);
+  const [copiedCommitId, setCopiedCommitId] = useState(null);
 
   const repoId = data?.repositoryId ?? id;
 
@@ -99,6 +100,22 @@ function RepositoryDetail() {
     }
     return groups;
   }, [data]);
+
+  const commitIds = useMemo(() => {
+    const fromFiles = [...filesByCommit.keys()];
+    const fromApi = data?.commits ?? [];
+    return [...new Set([...fromApi, ...fromFiles])];
+  }, [data, filesByCommit]);
+
+  const handleCopyCommitId = async (commitId) => {
+    try {
+      await navigator.clipboard.writeText(String(commitId));
+      setCopiedCommitId(commitId);
+      window.setTimeout(() => setCopiedCommitId(null), 2000);
+    } catch {
+      setCopiedCommitId(null);
+    }
+  };
 
   const handleCopyRepoId = async () => {
     if (!repoId) return;
@@ -210,6 +227,7 @@ function RepositoryDetail() {
                 state={{
                   repositoryId: repoId,
                   repositoryName: data?.repositoryName,
+                  commitIds,
                 }}
                 className="mt-3 inline-block text-xs text-[#58a6ff] hover:underline"
               >
@@ -247,6 +265,7 @@ function RepositoryDetail() {
             state={{
               repositoryId: id,
               repositoryName: data?.repositoryName,
+              commitIds,
             }}
             className="mt-4 inline-block text-sm text-[#58a6ff] hover:underline"
           >
@@ -265,10 +284,32 @@ function RepositoryDetail() {
               className="overflow-hidden rounded-xl border border-gray-800 bg-[#0d1117]"
             >
               <div className="border-b border-gray-800 px-4 py-3">
-                <h2 className="text-sm font-semibold text-gray-300">Commit</h2>
-                <p className="mt-0.5 truncate font-mono text-xs text-gray-500">
-                  {commitId}
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h2 className="text-sm font-semibold text-gray-300">
+                      Commit ID
+                    </h2>
+                    <p className="mt-0.5 break-all font-mono text-xs text-[#58a6ff]">
+                      {commitId}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyCommitId(commitId)}
+                    className="shrink-0 rounded-md border border-gray-700 bg-gray-800/80 p-2 text-gray-300 transition-colors hover:text-white"
+                    title="Copy commit ID"
+                    aria-label="Copy commit ID"
+                  >
+                    {copiedCommitId === commitId ? (
+                      <IoCheckmark className="h-4 w-4 text-green-400" aria-hidden />
+                    ) : (
+                      <IoCopyOutline className="h-4 w-4" aria-hidden />
+                    )}
+                  </button>
+                </div>
+                <code className="mt-2 block break-all rounded-md border border-gray-700/80 bg-black/30 px-3 py-2 font-mono text-xs text-green-300">
+                  node index.js revert {commitId}
+                </code>
               </div>
 
               <ul className="divide-y divide-gray-800">
