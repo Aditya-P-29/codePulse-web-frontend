@@ -4,6 +4,7 @@ import axios from "axios";
 import { IoArrowBack, IoCopyOutline, IoCheckmark } from "react-icons/io5";
 import { GoFileDirectoryFill } from "react-icons/go";
 import { API_BASE_URL } from "../../config/api";
+import FollowButton from "../user/FollowButton";
 
 function formatBytes(bytes) {
   if (bytes == null) return "—";
@@ -26,6 +27,9 @@ function RepositoryDetail() {
   const [copiedCommitId, setCopiedCommitId] = useState(null);
 
   const repoId = data?.repositoryId ?? id;
+  const owner = data?.owner;
+  const ownerId = owner?._id ?? owner;
+  const ownerUsername = owner?.username;
 
   useEffect(() => {
     const fetchFiles = async () => {
@@ -68,6 +72,7 @@ function RepositoryDetail() {
         setData({
           repositoryId: repo._id,
           repositoryName: repo.name,
+          owner: repo.owner,
           commits,
           files: commits.map((commitId) => ({
             commitId,
@@ -184,6 +189,14 @@ function RepositoryDetail() {
               <h1 className="text-2xl font-bold text-white">
                 {data?.repositoryName ?? "Repository"}
               </h1>
+              {ownerUsername ? (
+                <p className="mt-1 text-sm text-gray-400">
+                  Owner{" "}
+                  <span className="font-medium text-[#58a6ff]">
+                    {ownerUsername}
+                  </span>
+                </p>
+              ) : null}
               <p className="mt-2 text-sm text-gray-400">
                 Files pushed from the CLI appear here after{" "}
                 <code className="rounded bg-gray-800 px-1 py-0.5 text-xs">
@@ -192,6 +205,16 @@ function RepositoryDetail() {
               </p>
             </div>
           </div>
+
+          {ownerId ? (
+            <div className="w-full shrink-0 sm:max-w-md">
+              <FollowButton
+                targetUserId={ownerId}
+                targetUsername={ownerUsername}
+                className="w-full"
+              />
+            </div>
+          ) : null}
 
           {repoId ? (
             <div className="w-full shrink-0 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 sm:max-w-md">

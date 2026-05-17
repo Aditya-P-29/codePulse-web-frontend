@@ -26,6 +26,8 @@ function Profile() {
 
   const [userDetails, setUserDetails] = useState({
     username: "Username",
+    followersCount: 0,
+    followingCount: 0,
   });
 
   const tabBase =
@@ -41,6 +43,7 @@ function Profile() {
         try {
           const response = await axios.get(
             `${API_BASE_URL}/userProfile/${userId}`,
+            { params: { viewerId: userId } },
           );
           setUserDetails(response.data);
         } catch (err) {
@@ -112,21 +115,18 @@ function Profile() {
                 {userDetails.username}
               </h2>
 
-              <button
-                type="button"
-                className="mt-4 w-full max-w-[200px] rounded-md border border-gray-600 bg-gray-800 py-2 text-sm font-semibold text-white transition-colors hover:border-gray-500 hover:bg-gray-700"
-              >
-                Follow
-              </button>
-
               <div className="mt-6 flex w-full max-w-[220px] justify-center gap-6 text-sm text-gray-400">
                 <div className="text-center">
-                  <div className="font-semibold text-white">100</div>
+                  <div className="font-semibold text-white">
+                    {userDetails.followersCount ?? 0}
+                  </div>
                   <div>Followers</div>
                 </div>
                 <div className="h-10 w-px self-center bg-gray-800" />
                 <div className="text-center">
-                  <div className="font-semibold text-white">100</div>
+                  <div className="font-semibold text-white">
+                    {userDetails.followingCount ?? 0}
+                  </div>
                   <div>Following</div>
                 </div>
               </div>

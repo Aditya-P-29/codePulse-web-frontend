@@ -7,6 +7,7 @@ import { HiOutlineSparkles } from "react-icons/hi2";
 import { MdEvent } from "react-icons/md";
 import { GrStar } from "react-icons/gr";
 import { API_BASE_URL } from "../../config/api";
+import FollowButton from "../user/FollowButton";
 
 function Dashboard() {
   const [repositories, setRepositories] = useState([]);
@@ -174,7 +175,14 @@ function Dashboard() {
                                 )}
                               </div>
                               </div>
-                              {renderStarButton(repo)}
+                              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                <FollowButton
+                                  targetUserId={repo.owner?._id ?? repo.owner}
+                                  targetUsername={repo.owner?.username}
+                                  size="sm"
+                                />
+                                {renderStarButton(repo)}
+                              </div>
                             </div>
                           </div>
                         </li>
